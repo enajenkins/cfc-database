@@ -84,4 +84,49 @@
           res.json({mssg: 'welcome to the api!'})
         })
 
-12. Install nodemon. run 'nodemon app' command to start dev server and run app. go to http://localhost:3000/books in browser to see output.
+12. Install nodemon. run 'nodemon app' command to start dev server and run app. go to <http://localhost:3000/books> in browser to see output.
+
+## Fetching Data
+
+1. Inside the `get` request handler function in `app.js`, us the `db` variable to find all of the documents on your collection.
+
+        app.get('/books', (req, res) => {
+          db.collection()
+          res.json({mssg: 'welcome to the api!'})
+        })
+
+2. Use the `.find()` method to find all of the docs in the book collection.
+
+        db.collections('books')
+        .find()
+
+3. Use the `.sort()` method to sort by author.
+
+        .sort({ author: 1 })
+
+4. Define an empty `'books'` array in the `get()` function scope and iterate through the returned documents using `.forEach()`, pushing each book into the array.
+Syntax:
+
+        .forEach( currentItem => array.push(currentItem))
+
+    So...
+
+        app.get('/books', (req, res) => {
+          let books = []
+
+          db.collections('books')
+          .find()
+          .sort({ author: 1 })
+          .forEach( book => books.push(book))
+
+5. Chain a `then()` method to `forEach()` that sends a response to the user once the data has all been fetched using the `res` object that was passed into the `get()` function. Use the res object to return a status of 200 and the `.json()` method to send the books array tothe client as a string.  
+
+        .then(() => {
+          res.status(200).json.books(books)
+        })
+
+6. Chain a .catch() method to catch errors and to return server error 500 and a json object with the property error: 'Could not fetch the document'.
+
+        .catch(() => {
+          res.status(500).json({error: 'Could not fetch the documents'})
+        })
