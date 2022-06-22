@@ -1,0 +1,30 @@
+{
+  "name": "cfc-software",
+  "version": "1.0.0",
+  "description": "Database for Cards for Coders",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/enajenkins/cfc-database.git"
+  },
+  "keywords": [
+    "study",
+    "guides",
+    "programming",
+    "javascript"
+  ],
+  "author": "Ena Jenkins",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/enajenkins/cfc-database/issues"
+  },
+  "homepage": "https://github.com/enajenkins/cfc-database#readme",
+  "dependencies": {
+    "express": "^4.18.1",
+    "mongodb": "^4.7.0",
+    "nodemon": "^2.0.16"
+  }
+}
