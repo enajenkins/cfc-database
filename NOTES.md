@@ -28,7 +28,7 @@
 
 1. Create a `db.js` file on the root of the folder where app.js is located. This is where all of your database connection code will go.
 
-2. Set up 2 functions. One to initially `connect to a database` and a second to `retrieve the connections` once you have connected and `export` both functions from the file for use in app.js later.
+2. Set up 2 functions. One to initially `connect to a database` and a second to `retrieve the connections` once you have connected and `export` both functions from the file for use in `app.js` later.
 
         module.exports = {
           connectToDb: () => { MongoClient.connect('mongodb://localhost:27017/bookstore')},
@@ -42,7 +42,7 @@
 
           connectToDb: () => { MongoClient.connect('mongodb://localhost:27017/bookstore') },
 
-5. Chain the `.then()` and `.catch()` methods to your connection method to handle the promise. Initialize a variable called `dbConnection`. Then, extract the client.db() method and store it in 'dbConnection'inside your .then() function block.
+5. Chain the `.then()` and `.catch()` methods to your connection method to handle the promise. Initialize a variable called `dbConnection`. Then, extract the `client.db()` method and store it in 'dbConnection' inside your `.then()` function block.
 
             MongoClient.connect('mongodb://localhost:27017/bookstore')
               .then((client) => {
@@ -74,9 +74,9 @@
 
       const { connectToDb, getDb } = require('./db')
 
-9. Establish a database connection before you start listening to the api.Set up a conditional that will check for the err value and listen for requests if the value is null.
+9. Establish a database connection before you start listening to the api. Set up a conditional that will check for the err value and listen for requests if the value is null.
 
-10. Move the app.listen function into the if block.
+10. Move the `app.listen` function into the if block.
 
 11. Set up route handlers
 
@@ -88,7 +88,7 @@
 
 ## Fetching Data
 
-1. Inside the `get` request handler function in `app.js`, us the `db` variable to find all of the documents on your collection.
+1. Inside the `get` request route handler function in `app.js`, us the `db` variable to find all of the documents on your collection.
 
         app.get('/books', (req, res) => {
           db.collection()
@@ -97,7 +97,7 @@
 
 2. Use the `.find()` method to find all of the docs in the book collection.
 
-        db.collections('books')
+        db.collection('books')
         .find()
 
 3. Use the `.sort()` method to sort by author.
@@ -114,19 +114,115 @@ Syntax:
         app.get('/books', (req, res) => {
           let books = []
 
-          db.collections('books')
+          db.collection('books')
           .find()
           .sort({ author: 1 })
           .forEach( book => books.push(book))
 
-5. Chain a `then()` method to `forEach()` that sends a response to the user once the data has all been fetched using the `res` object that was passed into the `get()` function. Use the res object to return a status of 200 and the `.json()` method to send the books array tothe client as a string.  
+5. Chain a `then()` method to `forEach()` that sends a response to the user once the data has all been fetched using the `res` object that was passed into the `get()` function. Use the res object to return a `status of 200` and the `.json()` method to send the books array tothe client as a string.  
 
         .then(() => {
           res.status(200).json.books(books)
         })
 
-6. Chain a .catch() method to catch errors and to return server error 500 and a json object with the property error: 'Could not fetch the document'.
+6. Chain a `.catch()` method to catch errors and to return `server error 500` and a json object with the property `error: 'Could not fetch the document'`.
 
         .catch(() => {
           res.status(500).json({error: 'Could not fetch the documents'})
         })
+
+## Route to fetch a single book
+
+1. Under the `/books` route handler you just created,  create another `app.get()` request route handler to get a single book using a route parameter (changeable part of the route) that you can call `id` - like so `/books/:id`. The second argument will once again be the callback function that will pass in the `req` and `res` objects. The syntax is as follows:
+
+        app.get('/routeName or /routeName/:param', callback function with req and res objects passed in)
+        
+        so...
+        
+        app.get('/books/:id', (req, res) => { })
+
+2. You will access the id from the request object via it's params.
+
+        app.get('/books/:id', (req, res) => { 
+          // req.params.id gives you access to the value in the :id param
+        })
+
+3. Get a reference to the collection again...
+
+        app.get('/books/:id', (req, res) => { 
+          db.collection('books')
+        })
+
+4. Find a single doc in the collection by using the method `.findOne({})` to pass through a filter to identify which document we will get back. Use the `_id:` field to filter through and get the desired document. Since we are using `ObjectId` from MongoDB make sure you require it at the top of the file. `req.params.id` gets you access to the value in the url. Pass `req.params.id` into ObjectId to access the id param sent back with the request.
+
+        app.get('/books/:id', (req, res) => { 
+          db.collection('books')
+          .findOne({_id: ObjectId(req.params.id)})
+        })
+
+5. Chain a `.then()` method so we can do something with the document that is returned. Send a status and the document back to the user - make sure the doc is in `json` format
+
+        db.collection('books')
+        .findOne({_id: ObjectId(req.params.id)})
+        .then(doc => {
+          res.status(200).json(doc)
+        })
+
+6. Chain a `.catch()` method do handle any errors. Send back a (500) server error status as well as the error property.
+
+        db.collection('books')
+        .findOne({_id: ObjectId(req.params.id)})
+        .then(doc => {
+          res.status(200).json(doc)
+        })
+        .catch(err => {
+          res.status(500).json({error: 'Could not fetch the documents'})
+        })
+
+7. To test, copy an id from the json in the browser where you are running the app. paste it into the url route in the address bar to see the single book. For example: <http://localhost:3000/books/62af93635b40c2db0cbc02bc>
+
+8. If you paste jibberish into the route url, you'll get a BSONTypeError because the string is not the proper format (24 characters) for the `ObjectId(req.params.id)` constuctor. Youll need to check that the string id is valid. Only fetch the doc if the string is valid or else send a 500 status response with error message.
+
+        if (ObjectId.isValid(req.params.id)) {
+          // fetch document
+        } else {
+          // send an error
+          res.status(500).json({error: 'Not a valid document ID'})
+        }
+
+9. Place the fetch code into a conditional.
+
+        if (ObjectId.isValid(req.params.id)) {
+
+            db.collection('books')
+            .findOne({_id: ObjectId(req.params.id)})
+            .then(doc => {
+              res.status(200).json(doc) 
+            })
+            .catch(err => {
+              res.status(500).json({error: 'Could not fetch the documents'})
+            })
+        } else {
+          res.status(500).json({error: 'Not a valid document ID'})
+        }
+
+10. when the ID is valid but the doc dosent exist, mongo returns null. You can handle this server side or client side
+
+### Other Notes
+
+`isValid()`
+According to Geeks for Geeks:
+<https://www.geeksforgeeks.org/how-to-check-if-a-string-is-valid-mongodb-objectid-in-node-js/>
+
+> `MongoDB ObjectId`: MongoDB creates a unique 12 bytes ID for every object using the timestamp of respective Object creation. This ObjectId can be used to uniquely target a specific object in the database.
+
+> `Structure:`
+
+> 4-byte timestamp value
+
+> 5-byte random value
+
+> 3-byte incrementing counter, initialized to a random value
+
+> It looks like this, `507f191e810c19729de860ea`
+During a normal backend workflow, the `ObjectId` might be received based on some computation or user operations. These might result invalid ObjectId and querying database with wrong ObjectId gives exception which is then handled later.
