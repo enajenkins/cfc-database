@@ -1,10 +1,14 @@
 /* Require Express */
 const express = require('express');
+const { ObjectId } = require('mongodb'); // provide access to MongoDB document's ObjectId to be used in the route params
 const { connectToDb, getDb } = require('./db');
 
 /* Initilize app and middleware (adding later) by invoking express function we just required and storing it in the const 'app' for later use */ 
 
-const app = express(); 
+const app = express();
+// return a json object - parse any json coming in on the request so it can be used in the handler functions. 
+app.use(express.json()); 
+
 /* listen for requests to a specific port number */
 
 /** Database Connection **
@@ -25,6 +29,14 @@ const app = express();
  * 
  * */
 
+
+/** Set up route handlers PT1**
+ *  Create a 'get' request handler for requests sent to the port we are listening to (3000)
+ * 
+ *  Inside the 'get' request handler function, us the `db` variable that stores the getDb() method to find all of the documents on your collection. 
+ * 
+*/
+
 let db;
 
 connectToDb((err) => {
@@ -38,12 +50,10 @@ connectToDb((err) => {
 
 })
 
-/** Set up route handlers **
- *  Create a 'get' request handler for requests sent to the port we are listening to (3000)
+/** Set up route handlers PT2 **
+ *  You will use the variable 'db' (containing the getDb() method) to reference a specific collection in the database by passing in the collection name.
  * 
- *  Inside the 'get' request handler function, us the `db` variable that stores the getDb() method to find all of the documents on your collection. You will use this method to reference a specific collection in the database by passing in the collection name.
- * 
- * Chain the find() method to collections() to find all of the docs in the book collection. 
+ * Chain the find() method to collection() to find all of the docs in the book collection. 
  *      -- find() returns a 'cursor' - a object that points to a set of documenmts outline by your query.
  *      -- if you don't define any arguments for find() it will return all of the documents. If you define a filter argument then it will return a subset.
  *
@@ -65,7 +75,7 @@ connectToDb((err) => {
   */
   app.get('/books', (req, res) => {
     let books = []
-
+    // connect to the books collection then use find() to return a cursor that we can attach methods to
     db.collection('books')
     .find()
     .sort({ author: 1 })
@@ -78,4 +88,61 @@ connectToDb((err) => {
     })
   })
 
+  /** Set up route to get single book **
+   * 
+   * Find a single doc in the collection by passing through a filter to identify which one we will get back
+   * 
+   * req.params.id gets you access to the value in the url
+   * 
+   * .then() so we can do something with the document that is returned.
+   * .catch() to handle errors
+   * 
+   * Check that the string id is valid. Only fetch the doc if the string is valid or else send a 500 status response with error message.
+   *  
+  */
+
+  app.get('/books/:id', (req, res) => {
+    if (ObjectId.isValid(req.params.id)) {
+      db.collection('books')
+      .findOne({_id: ObjectId(req.params.id)})
+      .then(doc => {
+        res.status(200).json(doc) 
+      })
+      .catch(err => {
+        res.status(500).json({error: 'Could not fetch the documents'})
+      })
+    } else {
+      res.status(500).json({error: 'Not a valid document ID'})
+    }
+  })
+
   /* Install nodemon. run 'nodemon app' command to start dev server and run app. go to http://localhost:3000/books in browser to see output */ 
+
+  /** Set up a POST request handler to save a book object to the database**
+   * 
+   * Store book object in a variable 'book'
+   * 
+   * Use db.collection() to get the 'books' collection from the database object
+   * 
+   * insert a single document and pass the book object that we are getting from the request body
+   * 
+   * fire a function once async task is complete passing in the result that will come back from MongoDB when you insert a document
+   * 
+   * send a response to the client that includes the result
+   * 
+   * send error response to handle errors
+   * 
+   * CLEAN UP COMMENTS LATER
+   */
+  app.post('/books', (req, res) => {
+    const book = req.body
+
+    db.collection('books') 
+    .insertOne(book)  
+    .then(result => { 
+      res.status(201).json(result)  
+    })
+    .catch(err => { 
+      res.status(500).json({err: 'Could not create a new document'})
+    })
+  })
