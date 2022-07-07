@@ -146,3 +146,55 @@ connectToDb((err) => {
       res.status(500).json({err: 'Could not create a new document'})
     })
   })
+
+  /** Create a DELETE request **
+   * 
+   */
+  
+  app.delete('/books/:id', (req, res) => {
+
+    if (ObjectId.isValid(req.params.id)) {
+      db.collection('books')
+      .deleteOne({_id: ObjectId(req.params.id)})
+      .then(result => {
+        res.status(200).json(result) 
+      })
+      .catch(err => {
+        res.status(500).json({error: 'Could not delete the documents'})
+      })
+    } else {
+      res.status(500).json({error: 'Not a valid document ID'})
+    }
+
+  })
+
+    /** Create a PATCH request to update a document **
+   * 
+   * This request is similar to the others
+   * 
+   * First get the update - assign the request body to a variable const updates = req.body
+   *  
+   */
+  
+    // a patch request updates individual fields in a document or many at once 
+     app.patch('/books/:id', (req, res) => {
+
+      // get the body sent back from the request and assign it to a variable
+      const updates = req.body
+
+      // check that the ID from the request parameters is valid 
+      // get the collection from the db object and chain the .updateOne() method. the first arg is how you will find the book (id property) and the second arg is an object how you will $set the incoming req.body update on the document 
+      if (ObjectId.isValid(req.params.id)) {
+        db.collection('books')
+        .updateOne({_id: ObjectId(req.params.id)}, {$set: updates})
+        .then(result => {
+          res.status(200).json(result) 
+        })
+        .catch(err => {
+          res.status(500).json({error: 'Could not update the documents'})
+        })
+      } else {
+        res.status(500).json({error: 'Not a valid document ID'})
+      }
+  
+    })

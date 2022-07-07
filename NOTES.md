@@ -286,6 +286,53 @@ According to Geeks for Geeks:
    * Paste the new json object in the request body window
    * Click send. You should see `"ackowledged": true` and an `insertedId` generated for the new entry
    * To check to see if the new book was added to the database, select the get request for all of the books from the Bookstore (or whatever you named it) collection to load it. If you scroll to the bottom the new entry should be there.
-   * Save the new POST request to the Bookstore collection
+   * Save the new `POST` request to the Bookstore collection
 
 CLEAN UP ABOVE NOTES LATER
+
+## Create a DELETE request
+
+1. A `PATCH` request updates individual fields in a document or many at once. Add a `PATCH` request handler under the `POST` handler. It should be similar to the `GET` and `DELETE` single book request because you will check if the ID is valid and you'll chain async methods.
+
+        app.patch('/books/:id', (req, res) => {
+
+2. Get the body that is sent back from the request and assign it to a variable:
+        app.patch('/books/:id', (req, res) => {
+          const updates = req.body
+
+3. Check that the ID from the request parameters is valid then get the collection from the `db` object.
+
+        app.patch('/books/:id', (req, res) => {
+          const updates = req.body
+
+          if (ObjectId.isValid(req.params.id)) {
+            db.collection('books')
+
+4. Chain the `.updateOne()` method. The first arg is how you will find the book (id property) and the second arg is how you will $set the incoming req.body update on the document.
+
+        app.patch('/books/:id', (req, res) => {
+          const updates = req.body
+
+          if (ObjectId.isValid(req.params.id)) {
+            db.collection('books')
+            .updateOne({_id: ObjectId(req.params.id)}, {$set: updates})
+
+5. Finish with the `.then()` and `.catch()` methods as is done with the other requests.
+
+      app.patch('/books/:id', (req, res) => {
+
+        const updates = req.body
+
+        if (ObjectId.isValid(req.params.id)) {
+          db.collection('books')
+          .updateOne({_id: ObjectId(req.params.id)}, {$set: updates})
+          .then(result => {
+            res.status(200).json(result)
+          })
+          .catch(err => {
+            res.status(500).json({error: 'Could not update the documents'})
+          })
+        } else {
+          res.status(500).json({error: 'Not a valid document ID'})
+        }
+      })
