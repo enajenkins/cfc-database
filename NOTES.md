@@ -215,14 +215,77 @@ According to Geeks for Geeks:
 <https://www.geeksforgeeks.org/how-to-check-if-a-string-is-valid-mongodb-objectid-in-node-js/>
 
 > `MongoDB ObjectId`: MongoDB creates a unique 12 bytes ID for every object using the timestamp of respective Object creation. This ObjectId can be used to uniquely target a specific object in the database.
-
+>
 > `Structure:`
-
+>
 > 4-byte timestamp value
-
+>
 > 5-byte random value
-
+>
 > 3-byte incrementing counter, initialized to a random value
-
+>
 > It looks like this, `507f191e810c19729de860ea`
 During a normal backend workflow, the `ObjectId` might be received based on some computation or user operations. These might result invalid ObjectId and querying database with wrong ObjectId gives exception which is then handled later.
+
+
+## Using Postman to simulate GET/POST/DELETE/UPDATE requests to an API
+
+1. Download, Install, and Run Postman locally
+
+2. How to make a GET request: File >> new tab. Select GET for type. Enter URL for the endpoint you want to hit (your local endpoiont we have been using to test): <http://localhost:3000/books/>. Hit send to send the request. The response will be at the bottom.
+
+3. Click the save button to save this request. You can rename it or leave it as the url and then you can add it to a collection.  
+
+4. Repeat the process to create and save a single book request. Grab an id from the json in the postmant response.
+
+## Setting up a POST request handler to test endpoint (DISMABIGUATE)
+
+1. Add a POST requsest handler to the app.js file. The route will be `'/books'`. This is the endpoint you will be sending a POST request to. When the request is recieved, you'll then fire the callback function that recieves a request and response. The POST request body that comes back will contain all of the information that you want to save to the database - basically a book document. You access it through the `req.body` property. You'll need Express Middleware to get access to this property though.
+
+        app.post('/books', (req, res) => {
+          // get the body of the POST request by using req.body
+        })
+
+2. Right under where you initialized Express in app.js earlier, mount the middleware function with the `.use()` method. Then, in order to parse and return any json coming in on the request so it can be used in the handler functions, pass in the 
+
+        const app = express();
+        app.use(express.json()); 
+
+Syntax: `app.use(path, callback)` (DISAMBIGUATE THIS) Refer to resource: <https://www.geeksforgeeks.org/express-js-app-use-function/>
+
+According to Geeks for Geeks:
+  > The `app.use()` function is used to mount the specified middleware function(s) at the path which is being specified. It is mostly used to set up middleware for your application.
+  >
+  > The `express.json()` function is a built-in middleware function in Express. It parses incoming requests with JSON payloads and is based on body-parser. Syntax: `express.json( [options] )`
+
+3. Now you can store the request body in a variable for ease of use and context.
+
+        app.post('/books', (req, res) => {
+          const book = req.body
+
+4. Save book object to the database. Get the books collction from the database object using `db.collection('books')`. Chain the `.insertOne()` method to insert a single document and pass in the book object that we are getting from the `request body`. Chain the `.then()` method to fire a function once the async task is complete and pass in the `result` that will come back from MongoDB when you insert a document. Send a `201 status response` to the client that includes the `result`. Chain a `.catch()` method and send a `500 status` error response.
+
+        app.post('/books', (req, res) => {
+        const book = req.body
+
+        db.collection('books')
+        .insertOne(book)
+        .then(result => {
+          res.status(201).json(result) 
+        })
+        .catch(err => {
+          res.status(500).json({err: 'Could not create a new document'})
+        })
+      })
+
+5. Test the POST request in Postman:
+   * Click in plus icon to add a `new connection`
+   * Change the request method to `POST`
+   * Add the localhost `url` <http://localhost:3000/books> to the address bar
+   * Select the `body` tab and choose `raw` and then `json` from the dropdown since we want to send a json object in the request body to post data to the database
+   * Paste the new json object in the request body window
+   * Click send. You should see `"ackowledged": true` and an `insertedId` generated for the new entry
+   * To check to see if the new book was added to the database, select the get request for all of the books from the Bookstore (or whatever you named it) collection to load it. If you scroll to the bottom the new entry should be there.
+   * Save the new POST request to the Bookstore collection
+
+CLEAN UP ABOVE NOTES LATER

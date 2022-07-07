@@ -5,7 +5,10 @@ const { connectToDb, getDb } = require('./db');
 
 /* Initilize app and middleware (adding later) by invoking express function we just required and storing it in the const 'app' for later use */ 
 
-const app = express(); 
+const app = express();
+// return a json object - parse any json coming in on the request so it can be used in the handler functions. 
+app.use(express.json()); 
+
 /* listen for requests to a specific port number */
 
 /** Database Connection **
@@ -114,3 +117,32 @@ connectToDb((err) => {
   })
 
   /* Install nodemon. run 'nodemon app' command to start dev server and run app. go to http://localhost:3000/books in browser to see output */ 
+
+  /** Set up a POST request handler to save a book object to the database**
+   * 
+   * Store book object in a variable 'book'
+   * 
+   * Use db.collection() to get the 'books' collection from the database object
+   * 
+   * insert a single document and pass the book object that we are getting from the request body
+   * 
+   * fire a function once async task is complete passing in the result that will come back from MongoDB when you insert a document
+   * 
+   * send a response to the client that includes the result
+   * 
+   * send error response to handle errors
+   * 
+   * CLEAN UP COMMENTS LATER
+   */
+  app.post('/books', (req, res) => {
+    const book = req.body
+
+    db.collection('books') 
+    .insertOne(book)  
+    .then(result => { 
+      res.status(201).json(result)  
+    })
+    .catch(err => { 
+      res.status(500).json({err: 'Could not create a new document'})
+    })
+  })
