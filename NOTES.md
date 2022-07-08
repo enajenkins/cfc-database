@@ -419,3 +419,20 @@ Checking for all existing indexes...
 ...will now return only the default index created by MongoDB
 
         [ { v: 2, key: { _id: 1 }, name: '_id_' } ]
+
+## Atlas - communicate with a database as a service platform
+
+Follow instructions here: <https://www.youtube.com/watch?v=084rmLU1UgA&list=PL4cUxeGkcC9h77dJ-QJlwGlZlTd4ecZOA&index=25>
+
+ADD NOTES LATER
+
+Replace the connection string with the one you copied from Atlas and replace the creds:
+
+        mongodb+srv://<username>:<password>@cluster0.mxnbwel.mongodb.net/?retryWrites=true&w=majority
+
+Once you change the conenction string to the Atlas DB location, you will notice that if you go into Postman and send a GET request that nothing comes back - because you need to add book docs to the Atlas DB. You can do this via a POST request
+
+Go to the previous POST request where you have one book json object in the request body field. Send this request again to add the book to the Atlas database. 
+
+Now go back to the previous GET request and re-send it. You should now see the newly added book doc.
+
