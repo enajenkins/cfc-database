@@ -370,3 +370,52 @@ For example you can query results page by page:
         .limit(booksPerPage) // limits us to getting 3 books per page back
 
    3. Test the query in Postman by sending a GET request to <http://localhost:3000/books?page=1>
+
+## Indexes
+
+Indexes allow the database server to perform specific queries in order to find documents more efficiently without having to examine the whole collection. For example
+
+        db.collections('books').find({'rating': 10})
+
+Normally MongoDB would have to scan the entire collection and look through each document to find the one where the rating field had a value of 10. Alternatively you can make an index for any field you need to query. An index contains a list of values for whatever field you're indexing. Mongo then scans the index for the values you are looking for rather than the whole collection. Those indexes will have a pointer that points back to the document it's referencing. `Note:` Creating an index for a collection requires that you change the index each time the collection changes - so it's extra work. Use indexes thoughtfully. Only use indexs when you have to return a subset of a collection.
+
+Open MongoSH, load the `bookstore` db and create an index for books with a rating of `8` 
+
+        db.books.createIndex({ rating: 8 })
+
+...returns
+
+        rating_8
+
+...then get the indexes to see that they have been created...
+
+        db.books.getIndexes()
+
+...will return all of the indexes you have created including the one for the _id field that Mongo creates by default. 
+
+        [
+          { v: 2, key: { _id: 1 }, name: '_id_' },
+          { v: 2, key: { rating: 8 }, name: 'rating_8' }
+        ]
+
+`.explain()` is a MongoSH method that will return information on the query execution so you can understand exaclty how your query executes and behaves. `More here:` <https://www.mongodb.com/docs/manual/reference/method/cursor.explain/>  Enter the following into MongoSH:
+
+        db.books.find({ rating: 8 }).explain('executionStats')
+
+If you examine the output you will see how many documents were examined and how many were returned based on the index `docsExamined: 0`, `nReturned: 0`. In this case the number was 0 for both because no books had a rating of 8. 
+
+You can drop an index with the following:
+
+        db.books.dropIndex({ rating: 8 })
+
+...will retuen...
+
+        { nIndexesWas: 2, ok: 1 }
+
+Checking for all existing indexes...
+
+        db.books.getIndexes()
+
+...will now return only the default index created by MongoDB
+
+        [ { v: 2, key: { _id: 1 }, name: '_id_' } ]
