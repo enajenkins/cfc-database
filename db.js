@@ -9,6 +9,8 @@ const { MongoClient } = require('mongodb');
 
 /* Initialize the var 'dbConnection' */
 let dbConnection;
+// change the UN and PW to the correct creds to connect to the DB
+let uri = 'mongodb+srv://<username>:<password>@cluster0.mxnbwel.mongodb.net/?retryWrites=true&w=majority'
 
 /** Create the functions needed to communicate with the database **
  * 
@@ -33,7 +35,8 @@ module.exports = {
 
   /* Function 1 */
   connectToDb: (cb) => {  
-    MongoClient.connect('mongodb://localhost:27017/bookstore')
+    // old connection string 'mongodb://localhost:27017/bookstore'
+    MongoClient.connect(uri)
       .then((client) => {
 
         dbConnection = client.db();

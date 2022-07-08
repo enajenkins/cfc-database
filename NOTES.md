@@ -286,6 +286,153 @@ According to Geeks for Geeks:
    * Paste the new json object in the request body window
    * Click send. You should see `"ackowledged": true` and an `insertedId` generated for the new entry
    * To check to see if the new book was added to the database, select the get request for all of the books from the Bookstore (or whatever you named it) collection to load it. If you scroll to the bottom the new entry should be there.
-   * Save the new POST request to the Bookstore collection
+   * Save the new `POST` request to the Bookstore collection
 
 CLEAN UP ABOVE NOTES LATER
+
+## Create a DELETE request
+
+1. A `PATCH` request updates individual fields in a document or many at once. Add a `PATCH` request handler under the `POST` handler. It should be similar to the `GET` and `DELETE` single book request because you will check if the ID is valid and you'll chain async methods.
+
+        app.patch('/books/:id', (req, res) => {
+
+2. Get the body that is sent back from the request and assign it to a variable:
+        app.patch('/books/:id', (req, res) => {
+          const updates = req.body
+
+3. Check that the ID from the request parameters is valid then get the collection from the `db` object.
+
+        app.patch('/books/:id', (req, res) => {
+          const updates = req.body
+
+          if (ObjectId.isValid(req.params.id)) {
+            db.collection('books')
+
+4. Chain the `.updateOne()` method. The first arg is how you will find the book (id property) and the second arg is how you will $set the incoming req.body update on the document.
+
+        app.patch('/books/:id', (req, res) => {
+          const updates = req.body
+
+          if (ObjectId.isValid(req.params.id)) {
+            db.collection('books')
+            .updateOne({_id: ObjectId(req.params.id)}, {$set: updates})
+
+5. Finish with the `.then()` and `.catch()` methods as is done with the other requests.
+
+      app.patch('/books/:id', (req, res) => {
+
+        const updates = req.body
+
+        if (ObjectId.isValid(req.params.id)) {
+          db.collection('books')
+          .updateOne({_id: ObjectId(req.params.id)}, {$set: updates})
+          .then(result => {
+            res.status(200).json(result)
+          })
+          .catch(err => {
+            res.status(500).json({error: 'Could not update the documents'})
+          })
+        } else {
+          res.status(500).json({error: 'Not a valid document ID'})
+        }
+      })
+
+## Simple Pagination for the GET requests
+
+Typically you'd want to use pagination when you are querying data from a large database. You'd use query parameters at the end of the query url - a query string. You would access the query parameters from the request object.
+For example you can query results page by page: 
+
+<http://localhost:3000/books/?page=1>,
+
+<http://localhost:3000/books/?page=2>, 
+
+<http://localhost:3000/books/?page=3>
+
+1. In the first `GET` request for the entire books collection, add a variable for pages that will store a `page` parameter from the request query. 
+
+        const page = req.query.page 
+
+    This will get us the value of the page being requested. If whoever is making the request does not pass along a page parameter, then default the param to `0`
+
+        const page = req.query.page || 0
+
+2. Implement pagination in the query. Define how many book docs will be sent back.
+
+        const page = req.query.page || 0
+        const booksPerPage = 3
+
+    `skip()` method - allows you to skip a certain number of documents in the query results. For example: `db.collection.find().skip(1)`. The number of pages we want to skip is `page * booksPerPage` so we pass this to the `skip()` method as the argument.
+
+        .skip(page * booksPerPage) // skips a certain amount of pages
+
+    `limit()` method - limits the number of documents returned. `db.collection.find().limit(25)`
+
+        .limit(booksPerPage) // limits us to getting 3 books per page back
+
+   3. Test the query in Postman by sending a GET request to <http://localhost:3000/books?page=1>
+
+## Indexes
+
+Indexes allow the database server to perform specific queries in order to find documents more efficiently without having to examine the whole collection. For example
+
+        db.collections('books').find({'rating': 10})
+
+Normally MongoDB would have to scan the entire collection and look through each document to find the one where the rating field had a value of 10. Alternatively you can make an index for any field you need to query. An index contains a list of values for whatever field you're indexing. Mongo then scans the index for the values you are looking for rather than the whole collection. Those indexes will have a pointer that points back to the document it's referencing. `Note:` Creating an index for a collection requires that you change the index each time the collection changes - so it's extra work. Use indexes thoughtfully. Only use indexs when you have to return a subset of a collection.
+
+Open MongoSH, load the `bookstore` db and create an index for books with a rating of `8` 
+
+        db.books.createIndex({ rating: 8 })
+
+...returns
+
+        rating_8
+
+...then get the indexes to see that they have been created...
+
+        db.books.getIndexes()
+
+...will return all of the indexes you have created including the one for the _id field that Mongo creates by default. 
+
+        [
+          { v: 2, key: { _id: 1 }, name: '_id_' },
+          { v: 2, key: { rating: 8 }, name: 'rating_8' }
+        ]
+
+`.explain()` is a MongoSH method that will return information on the query execution so you can understand exaclty how your query executes and behaves. `More here:` <https://www.mongodb.com/docs/manual/reference/method/cursor.explain/>  Enter the following into MongoSH:
+
+        db.books.find({ rating: 8 }).explain('executionStats')
+
+If you examine the output you will see how many documents were examined and how many were returned based on the index `docsExamined: 0`, `nReturned: 0`. In this case the number was 0 for both because no books had a rating of 8. 
+
+You can drop an index with the following:
+
+        db.books.dropIndex({ rating: 8 })
+
+...will retuen...
+
+        { nIndexesWas: 2, ok: 1 }
+
+Checking for all existing indexes...
+
+        db.books.getIndexes()
+
+...will now return only the default index created by MongoDB
+
+        [ { v: 2, key: { _id: 1 }, name: '_id_' } ]
+
+## Atlas - communicate with a database as a service platform
+
+Follow instructions here: <https://www.youtube.com/watch?v=084rmLU1UgA&list=PL4cUxeGkcC9h77dJ-QJlwGlZlTd4ecZOA&index=25>
+
+ADD NOTES LATER
+
+Replace the connection string with the one you copied from Atlas and replace the creds:
+
+        mongodb+srv://<username>:<password>@cluster0.mxnbwel.mongodb.net/?retryWrites=true&w=majority
+
+Once you change the conenction string to the Atlas DB location, you will notice that if you go into Postman and send a GET request that nothing comes back - because you need to add book docs to the Atlas DB. You can do this via a POST request
+
+Go to the previous POST request where you have one book json object in the request body field. Send this request again to add the book to the Atlas database. 
+
+Now go back to the previous GET request and re-send it. You should now see the newly added book doc.
+
