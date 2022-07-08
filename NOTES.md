@@ -336,3 +336,37 @@ CLEAN UP ABOVE NOTES LATER
           res.status(500).json({error: 'Not a valid document ID'})
         }
       })
+
+## Simple Pagination for the GET requests
+
+Typically you'd want to use pagination when you are querying data from a large database. You'd use query parameters at the end of the query url - a query string. You would access the query parameters from the request object.
+For example you can query results page by page: 
+
+<http://localhost:3000/books/?page=1>,
+
+<http://localhost:3000/books/?page=2>, 
+
+<http://localhost:3000/books/?page=3>
+
+1. In the first `GET` request for the entire books collection, add a variable for pages that will store a `page` parameter from the request query. 
+
+        const page = req.query.page 
+
+    This will get us the value of the page being requested. If whoever is making the request does not pass along a page parameter, then default the param to `0`
+
+        const page = req.query.page || 0
+
+2. Implement pagination in the query. Define how many book docs will be sent back.
+
+        const page = req.query.page || 0
+        const booksPerPage = 3
+
+    `skip()` method - allows you to skip a certain number of documents in the query results. For example: `db.collection.find().skip(1)`. The number of pages we want to skip is `page * booksPerPage` so we pass this to the `skip()` method as the argument.
+
+        .skip(page * booksPerPage) // skips a certain amount of pages
+
+    `limit()` method - limits the number of documents returned. `db.collection.find().limit(25)`
+
+        .limit(booksPerPage) // limits us to getting 3 books per page back
+
+   3. Test the query in Postman by sending a GET request to <http://localhost:3000/books?page=1>

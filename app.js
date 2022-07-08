@@ -74,11 +74,19 @@ connectToDb((err) => {
  * Chain a .catch() method to catch errors. This and to return server error 500 and a json object with the property error: 'Could not fetch the documents'.
   */
   app.get('/books', (req, res) => {
+    // value of current page being requested or default to 0 if not defined
+    const page = req.query.page || 0
+    // define how many book docs will be sent back
+    const booksPerPage = 3
+
     let books = []
     // connect to the books collection then use find() to return a cursor that we can attach methods to
+    //.skip() a certain amount of pages (3) then .limit() the number of books you'll get back per page 
     db.collection('books')
     .find()
     .sort({ author: 1 })
+    .skip(page * booksPerPage)
+    .limit(booksPerPage)
     .forEach( book => books.push(book))
     .then(() => {
       res.status(200).json(books)
